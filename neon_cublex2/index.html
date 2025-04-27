@@ -1,0 +1,356 @@
+<!DOCTYPE html><html><head><title>Neon Cublex 2</title><meta http-equiv="content-type" content="text/html; charset=UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui=1"><meta charset="UTF-8"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="description" content=""><link rel="manifest" href="manifest.json"><link rel="icon" type="image/png" href="icon64.png"><link rel="apple-touch-icon" sizes="180x180" href="icon180.png"><link rel="icon" type="image/png" sizes="32x32" href="icon32.png"><link rel="icon" type="image/png" sizes="16x16" href="icon16.png"><style>html,body {
+  margin: 0;
+  padding: 0;
+  background-color: #000;
+  overflow:hidden;
+  font-family: Verdana;
+}
+.noselect {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+#canvaswrapper {
+  text-align: center ;
+}
+</style><style>@font-face { font-family: "BitCell" ; src: url("fonts/BitCell.ttf") format("truetype"); }</style><script>window.fonts = ["BitCell"]</script></head><body class="noselect custom-cursor" oncontextmenu="return false;"><div id="canvaswrapper"></div><script type="text/javascript">var resources = {"images":[{"file":"bullet.png","version":15,"size":239,"properties":{"frames":2,"fps":18}},{"file":"cuarter.png","version":16,"size":420,"properties":{"frames":1,"fps":5}},{"file":"empty.png","version":4,"size":171,"properties":{"frames":1,"fps":5}},{"file":"enemy.png","version":3,"size":279,"properties":{"frames":1,"fps":5}},{"file":"full.png","version":26,"size":399,"properties":{"frames":1,"fps":5}},{"file":"half.png","version":10,"size":390,"properties":{"frames":1,"fps":5}},{"file":"icon.png","version":31,"size":287,"properties":{"frames":1,"fps":5}},{"file":"less.png","version":10,"size":348,"properties":{"frames":1,"fps":5}},{"file":"particle.png","version":27,"size":442,"properties":{"frames":6,"fps":27}},{"file":"player.png","version":3,"size":275,"properties":{"frames":1,"fps":5}},{"file":"poster.png","version":1,"size":11542,"properties":{"frames":1,"fps":5}},{"file":"stars.png","version":10,"size":279,"properties":{"frames":1,"fps":5}},{"file":"void.png","version":6,"size":257,"properties":{"frames":1,"fps":5}}],"assets":[],"maps":{},"sounds":[{"file":"damage.wav","version":1,"size":36404,"properties":{}},{"file":"shoot.wav","version":1,"size":58984,"properties":{}}],"music":[]};
+var graphics = "M1";
+
+</script><script type="text/javascript">var orientation = 'landscape' ;
+var aspect = '2x1' ;
+var ms_libs = [] ;
+window.skip_service_worker = true;
+window.exported_project = true;
+window.ms_use_server = false ;
+</script><script src="compiler.js"></script><script src="parser.js"></script><script src="processor.js"></script><script src="program.js"></script><script src="routine.js"></script><script src="runner.js"></script><script src="token.js"></script><script src="tokenizer.js"></script><script src="transpiler.js"></script><script src="microengine.js"></script></body><script type="text/javascript">//
+//
+// The game is started with the code below.
+// Once you have received the "started" signal (see below),
+// you can do the following:
+// 1) Inject functions or objects into the global context of the microStudio engine, example:
+//
+//   window.player.setGlobal("special_callback",function(x) { console.info(x) }) ;
+//   // Your microScript code can now call the "special_callback" function
+//
+// 2) Call microScript global functions from your JavaScript code, example:
+//
+//   window.player.call("call_me_from_javascript",[10,1000]) ;
+//   // arguments to the function call are provided as an array
+//
+// 3) Run a microScript code snippet from your JavaScript code, example:
+//
+//   window.player.exec("player.position_x = 50",function(result) { console.log(result) ; }) ;
+//
+
+window.addEventListener("load",function() {
+  window.player = new Player(function(event) {
+    if (event.name == "started") {
+      // signal that the game is started
+    }
+    else if (event.name == "log") {
+      // console.info(event.data) ;
+    }
+  }) ;
+  document.body.focus() ;
+}) ;
+
+</script><script id="code" type="text/x-microscript">
+
+
+function()
+init_bullet = function()
+  bullet_x = player.x
+  bullet_y = player.y
+  bullet_speed = 2
+  bullet_active = false 
+end
+
+fire_bullet = function()
+  if keyboard.SPACE and not bullet_active then
+    audio.playSound("shoot", 1, 1, 0, 0)
+    bullet_x = player.x
+    bullet_y = player.y
+    bullet_active = true
+  end
+end
+
+move_bullet = function()
+  if bullet_active then
+    bullet_y += bullet_speed
+    if bullet_y > 100 then
+      bullet_active = false
+    end
+  end
+end
+
+draw_bullet = function()
+  if bullet_active then
+    screen.drawSprite("bullet", bullet_x, bullet_y, 20, 20)
+  end
+end
+end()
+
+
+
+function()
+init_enemy = function()
+  size = 20
+  enemy_sprite = "enemy"
+  enemys = []
+end
+
+create_enemys = function()
+  local enemy = object
+    y = 100
+    x = 0
+    active = true
+  end
+  enemy.x = randRange(-190, 190)
+  
+  enemys.push(enemy)
+end
+
+draw_enemy = function()
+  for e in enemys
+    screen.drawSprite(enemy_sprite, e.x, e.y, size, size)
+  end
+end
+
+update_enemy = function()
+  local temp = []
+  for enemy in enemys
+    enemy.y -= 2 + points/2
+    if enemy.y < player.y then
+      enemy.active = false
+    end
+    if distance(bullet_x, bullet_y, enemy.x, enemy.y) < size and bullet_active then
+      enemy.active = false
+      points += 1 
+      create_xplosion(enemy.x, enemy.y, 20)
+    end
+    if distance(player.x, player.y, enemy.x, enemy.y) < size then
+      audio.playSound("damage", 1, 1, 0, 0)
+      life -= 5
+      enemy.active = false
+    end
+    if enemy.active then
+      temp.push(enemy)
+    end
+  end
+  enemys = temp
+  if random.next() < 0.1 then
+    create_enemys()
+  end
+end // thanks to mrLman for the tutorial of the multiple enemys
+end()
+
+
+
+function()
+clamp = function(value, lower_limit, upper_limit)
+  local val = max(value, lower_limit)
+  val = min(val, upper_limit)
+  return val
+end
+
+randRange = function(Lower = 0, Upper = 1)
+  return random.next() * (Upper - Lower) + Lower
+end
+
+distance = function(x1, y1, x2, y2)
+  local a = x2 - x1
+  local b = y2 - y1
+  local c = sqrt(pow(a, 2) + pow(b, 2))
+  return c
+end
+end()
+
+
+
+function()
+init_star = function()
+  stars = []
+end
+
+create_star = function()
+  local star = object
+    y = 100
+    x = 0
+    active = true
+  end
+  star.x = randRange(-190, 190)
+  
+  stars.push(star)
+end
+
+update_star = function()
+  local temp = []
+  for star in stars
+    star.y -= 2 
+    if star.active then
+      temp.push(star)
+    end
+  end
+  stars = temp
+  if random.next() < 0.1 then
+    create_star()
+  end
+end
+
+draw_star = function()
+  for e in stars
+    screen.drawSprite("stars", e.x, e.y, 5, 5)
+  end
+end
+
+end()
+
+
+
+function()
+draw_bar = function()
+  if life > 75 then
+    screen.drawSprite("full", -100, 60, 30, 30)
+  elsif life < 76 and life > 50 then
+    screen.drawSprite("cuarter", -100, 60, 30, 30)
+  elsif life < 51 and life > 26 then
+    screen.drawSprite("half", -100, 60, 30, 30)
+  elsif life < 26 and life > 0 then
+    screen.drawSprite("less", -100, 60, 30, 30)
+  else 
+    screen.drawSprite("void", -100, 60, 30, 30)
+  end
+end
+end()
+
+
+
+function()
+init = function()
+  game_state = true
+  points = 0
+  init_bullet()
+  init_star()
+  create_star()
+  init_enemy()
+  init_xplosion()
+  player_init()
+end
+
+update = function()
+  if game_state then
+    player_update()
+    update_star()
+    fire_bullet()
+    move_bullet()
+    update_enemy()
+    updatexplosion()
+  end
+end
+
+draw = function()
+  screen.clear()
+  draw_star()
+  player_draw()
+  draw_bullet()
+  draw_enemy()
+  drawxplosion()
+  draw_bar()
+  screen.drawText(points, -100, 60, 20, 20,"#FFFFFF")
+  if not game_state then
+    screen.fillRect(0,0, 5000, 5000,"rgb(255,170,170)")
+    screen.fillRect(0,0, 500, 50, "rgb(0,0,0)")
+    screen.drawText("You've been busted", 0, 0, 20, "rgb(255,0,0)")
+    screen.drawText("Press space to try again!", 0, -50, 15,"rgb(166,166,166)")
+  end
+end
+end()
+
+
+
+function()
+player_init = function()
+  life = 100
+  player = object
+    x = 0
+    y = -90
+    sprite = "player"
+    speed = 2
+  end
+end
+
+player_update = function()
+  if keyboard.LEFT then
+    player.x -= player.speed
+  end
+  if keyboard.RIGHT then
+    player.x += player.speed
+  end
+  player.x = clamp(player.x, -190, 190)
+  if life < 0 then
+    create_xplosion(player.x, player.y, 50, 0, 0)
+    game_state = false
+  end
+  if not game_state then
+    
+    player.sprite = "empty"
+  end
+end
+
+player_draw = function()
+  screen.drawSprite(player.sprite, player.x, player.y, 20, 20)
+  if game_state == false then
+    if keyboard.SPACE then
+      init()
+    end
+  end
+end
+end()
+
+
+
+function()
+init_xplosion = function()
+  explosions = []
+end
+
+create_xplosion = function(x, y, s, delay = 0)
+  local explosion = object
+    posx = x
+    posy = y
+    size = s
+    delay = delay
+    active = true
+  end
+  explosion.frame = 0 - delay
+  explosions.push(explosion)
+end
+
+updatexplosion = function()
+  local temp = []
+  for item in explosions
+    item.frame += 0.5
+    if item.frame >= 4 then
+      item.active = false
+    end
+    
+    if item.active then
+      temp.push(item)
+    end
+  end
+  explosions = temp
+end
+
+drawxplosion = function()
+  for item in explosions
+    sprites["particles"].setFrame(0)
+    screen.drawSprite("particle", item.posx, item.posy, item.size, item.size)
+  end
+end
+end()
+
+
+</script></html>
